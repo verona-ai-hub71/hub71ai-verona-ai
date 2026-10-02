@@ -1,0 +1,14 @@
+const assert=require('node:assert/strict');const E=require('../dist/engine.js');
+let s=E.fresh();const start=E.priorities(s).map(x=>x.id);assert.equal(start[0],'housing');
+E.respond(s,'My salary hasn’t arrived');assert.equal(s.income,'late');assert.ok(E.priorities(s).some(t=>t.id==='salary'));assert.ok(E.tasks(s).find(t=>t.id==='budget').priority>70);assert.deepEqual(s.complete,['arrival','work']);
+const logs=s.revisions.length;assert.equal(E.event(s,'salary-late'),false);assert.equal(s.revisions.length,logs);
+E.respond(s,'My salary has arrived');assert.equal(s.income,'received');assert.ok(!E.priorities(s).some(x=>x.id==='salary'));assert.equal(s.available,4200);
+E.respond(s,'My appointment is unconfirmed');assert.equal(s.medical,'unconfirmed');E.respond(s,'My appointment is confirmed');assert.equal(s.medical,'confirmed');assert.ok(!E.priorities(s).some(x=>x.id==='medical'));
+E.event(s,'home-secured');assert.equal(E.tasks(s).find(t=>t.id==='housing').status,'completed');
+E.respond(s,'I feel overwhelmed');assert.equal(s.feeling,'Overwhelmed');assert.ok(E.priorities(s).length<=2);assert.equal(s.wellbeing,true);
+E.respond(s,'Give me space');assert.equal(s.paused,true);assert.equal(E.greeting(s).mood,'quiet');
+s=E.fresh();s.snoozed.housing=1;assert.ok(!E.priorities(s).some(t=>t.id==='housing'));E.event(s,'advance');assert.ok(E.priorities(s).some(t=>t.id==='housing'));
+s=E.fresh();s.pace='Gentle';assert.equal(E.priorities(s).length,2);assert.equal(E.daysUntil('2026-10-08',0),6);assert.equal(E.daysUntil('2026-10-01',0),-1);
+assert.match(E.respond(s,'Something this demo cannot understand').reply,/not connected/);
+assert.match(E.respond(s,'I am suicidal').reply,/emergency/);assert.ok(!E.respond(s,'I am suicidal').actions.length);
+console.log('PASS: connected replanning, negative payment wording, idempotency, provenance limits, completion preservation, confirmed status, gentle pace, snooze timing, fallback and crisis routing.');
